@@ -1,13 +1,13 @@
 # geheimnis
 
-Implementation of cross-platform (clj, cljs) cryptography. The library
-supports AES/CBC/Pkcs7Padding with a 256 bit key and RSA with
-arbitrary keysize. If you need something which is not provided, please
-open an issue. While `geheimnis` is not supposed to cover all
-cryptographic options like OpenSSL compatibility with a big set of
-chiffres, common and useful algorithms should be provided with a solid
-implementation. `geheimnis` is supposed to be batteries included on
-Clojure level, so doing the right thing should be easy.
+Implementation of cross-platform (clj, cljs) cryptography. The library supports
+AES/CBC/Pkcs7Padding with a 256 bit key and RSA with arbitrary keysize. If you
+need something which is not provided, please open an issue. While `geheimnis` is
+not supposed to cover all cryptographic options like OpenSSL compatibility with
+a big set of chiffres, common and useful algorithms to do standard
+public-private key solutions should be provided with a solid implementation.
+`geheimnis` is supposed to be batteries included on Clojure level, so doing the
+right thing should be easy.
 
 This library is still very young, but encryption methods work between
 platforms and are initialized with proper upstream/documented
@@ -39,12 +39,14 @@ Add this to your leiningen project's dependencies:
 ## TODO
 - include jsbn library with externs or as gclosure module
 - the clj reader has problems compiling cljs with tagged literals
+- use cljsjs/bignumber for RSA
 - add padding support to RSA
+- Explore http://nacl.cr.yp.to/ with https://download.libsodium.org/doc/ and https://www.npmjs.com/package/libsodium for proven safety
 
 
 ## License
 
-Copyright © 2016 Christian Weilbach
+Copyright © 2016-2017 Christian Weilbach
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.

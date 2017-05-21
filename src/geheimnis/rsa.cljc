@@ -50,7 +50,7 @@
            phi (.multiply (.subtract p one) (.subtract q one))
 
            modulus (.multiply p q)
-           pub-key (BigInteger. "65537")
+           pub-key (BigInteger. "65537") ;; exponent
            priv-key (.modInverse pub-key phi)]
        (map->RSAKey {:pub-key pub-key
                      :priv-key priv-key
@@ -81,6 +81,7 @@
   [{:keys [priv-key modulus]} e]
   (.modPow e priv-key modulus))
 
+
 (comment
   (require 'figwheel-sidecar.repl-api)
   (figwheel-sidecar.repl-api/cljs-repl)
@@ -109,7 +110,7 @@
 
   (decrypt keys (read-string "#geheimnis/BigInt \"66363559570838882996297763680386052934789877756036437638538075638521703891529011150259410176893131814997266795104235685716433124547855929266295804896677760925819905684043513885974907570165006322147912346592186806119441475825845321015234893914149045729432226933836548398341740872760843160442790118643906855979\""))
 
-  (decrypt rsa-key (encrypt rsa-key (js/BigInteger. "123")))
+  (decrypt rsa-key (encrypt rsa-key (jBigInteger. "123")))
 
   (js/BigInteger. (clj->js (map #(if (> % 127) (- % 128) %)  (edn-hash [1 2 3]))))
 

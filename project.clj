@@ -26,7 +26,7 @@
              :compiler
              {:main geheimnis.rsa
               :asset-path "js/out"
-              :libs ["gclosure/pkcs7.js"]
+              :libs ["gclosure/pkcs7.js" "jsbn/jsbn.js"]
               :output-to "resources/public/js/client.js"
               :output-dir "resources/public/js/out"
               :optimizations :none
