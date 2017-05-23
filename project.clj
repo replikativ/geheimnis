@@ -1,4 +1,4 @@
-(defproject io.replikativ/geheimnis "0.1.0"
+(defproject io.replikativ/geheimnis "0.1.1"
   :description "Cross-platform cryptography between cljs and clj."
   :url "https://github.com/replikativ/geheimnis"
   :license {:name "Eclipse Public License"
@@ -6,12 +6,12 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.34"]
                  [org.clojure/data.codec "0.1.0"]
-                 [io.replikativ/hasch "0.3.0"]]
+                 [io.replikativ/hasch "0.3.4"]
+                 [org.clojure/java.classpath "0.2.3"]]
 
   :plugins [[lein-cljsbuild "1.1.2"]]
 
-  :profiles {:dev {:dependencies [[midje "1.7.0"]
-                                  [com.cemerick/piggieback "0.2.1"]]
+  :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]]
                    :figwheel {:nrepl-port 7888
                               :nrepl-middleware ["cider.nrepl/cider-middleware"
                                                  "cemerick.piggieback/wrap-cljs-repl"]}
@@ -26,7 +26,6 @@
              :compiler
              {:main geheimnis.rsa
               :asset-path "js/out"
-              :libs ["gclosure/pkcs7.js" "jsbn/jsbn.js"]
               :output-to "resources/public/js/client.js"
               :output-dir "resources/public/js/out"
               :optimizations :none
