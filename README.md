@@ -36,6 +36,21 @@ Add this to your leiningen project's dependencies:
 (decrypt "s3cr3T" (encrypt "s3cr3T" (byte-array (range 10)))
 ~~~
 
+
+## Clojurescript Testing
+
+Make sure [karma](http://karma-runner.github.io/1.0/index.html) for Browser-Testing is installed:
+
+~~~shell
+ npm install karma karma-firefox-launcher karma-chrome-launcher karma-safari-launcher  karma-cljs-test --save-dev
+~~~
+
+Test in your preferred browser by running
+~~~shell
+lein doo firefox browser-test
+~~~
+
+
 ## TODO
 - include jsbn library with externs or as gclosure module
 - the clj reader has problems compiling cljs with tagged literals
@@ -46,7 +61,7 @@ Add this to your leiningen project's dependencies:
 
 ## License
 
-Copyright © 2016-2017 Christian Weilbach
+Copyright © 2016-2017 Christian Weilbach, Konrad Kühne
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
