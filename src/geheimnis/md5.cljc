@@ -1,11 +1,11 @@
 (ns geheimnis.md5
-  #?(:cljs (:require [[goog.crypt.Md5]
+  #?(:cljs (:require [goog.crypt.Md5]
                       [goog.crypt.Hash]
-                      [goog.crypt]]))
+                      [goog.crypt]))
   #?(:clj (:import [java.security MessageDigest]
                    [java.math BigInteger])))
 
-(defn md5 [s]
+(defn encode [s]
   #?(:clj
      (let [algorithm (MessageDigest/getInstance "MD5")
            raw       (.digest algorithm (.getBytes s))]
