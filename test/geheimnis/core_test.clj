@@ -31,6 +31,3 @@
     (is (= (seq (b64/decode (b64/encode (byte-array (range 10)))))
            (range 10)))))
 
-(deftest test-md5
-  (is (= (md5/encode "geheimnis")
-         "525e92c6aa11544a2ab794f8921ecb0f")))

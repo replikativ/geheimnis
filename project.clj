@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.34"]
                  [org.clojure/data.codec "0.1.0"]
-                 [io.replikativ/hasch "0.3.4"]
+                 [io.replikativ/hasch "0.3.5-SNAPSHOT"]
                  [org.clojure/java.classpath "0.2.3"]]
 
   :plugins [[lein-cljsbuild "1.1.2"]

@@ -19,6 +19,3 @@
            (range 10)))))
 
 
-(deftest test-md5
-  (is (= (md5/encode "geheimnis")
-         "525e92c6aa11544a2ab794f8921ecb0f")))
