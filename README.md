@@ -1,7 +1,7 @@
 # geheimnis
 
 Implementation of cross-platform (clj, cljs) cryptography. The library supports
-AES/CBC/Pkcs7Padding with a 256 bit key and RSA with arbitrary keysize. If you
+AES/CBC/Pkcs7Padding with a 256 bit key and RSA with arbitrary keysize, as well as simple MD5 hashing. If you
 need something which is not provided, please open an issue. While `geheimnis` is
 not supposed to cover all cryptographic options like OpenSSL compatibility with
 a big set of chiffres, common and useful algorithms to do standard
@@ -33,8 +33,29 @@ Add this to your leiningen project's dependencies:
 ~~~clojure
 (require '[geheimnis.aes :refer [encrypt decrypt]])
 
-(decrypt "s3cr3T" (encrypt "s3cr3T" (byte-array (range 10)))
+(decrypt "s3cr3T" (encrypt "s3cr3T" (byte-array (range 10))))
 ~~~
+
+~~~clojure
+(require '[geheimnis.md5 :refer [encode]])
+
+(encode "geheimnis") ;; => "525e92c6aa11544a2ab794f8921ecb0f" 
+~~~
+
+
+## Clojurescript Testing
+
+Make sure [karma](http://karma-runner.github.io/1.0/index.html) and launcher for testing in your favourite browser is installed:
+
+~~~shell
+ npm install karma karma-firefox-launcher karma-chrome-launcher karma-safari-launcher  karma-cljs-test --save-dev
+~~~
+
+Test in your preferred browser by running
+~~~shell
+lein doo firefox browser-test
+~~~
+
 
 ## TODO
 - include jsbn library with externs or as gclosure module
@@ -46,7 +67,7 @@ Add this to your leiningen project's dependencies:
 
 ## License
 
-Copyright © 2016-2017 Christian Weilbach
+Copyright © 2016-2017 Christian Weilbach, Konrad Kühne
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.

@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [geheimnis.aes :as aes]
             [geheimnis.rsa :as rsa]
-            [geheimnis.base64 :as b64]))
+            [geheimnis.base64 :as b64]
+            [geheimnis.md5 :as md5]))
 
 (deftest aes-test
   (testing "AES tests."
@@ -29,3 +30,7 @@
   (testing "Base64 encoding."
     (is (= (seq (b64/decode (b64/encode (byte-array (range 10)))))
            (range 10)))))
+
+(deftest test-md5
+  (is (= (md5/encode "geheimnis")
+         "525e92c6aa11544a2ab794f8921ecb0f")))
