@@ -1,4 +1,7 @@
 {:paths ["src" "resources"]
+
+ :mvn/repos {"clojars" {:url "https://repo.clojars.org/"}}
+
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/clojurescript {:mvn/version "1.11.60"}
         org.clojure/data.codec {:mvn/version "0.1.1"}

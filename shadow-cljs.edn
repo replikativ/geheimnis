@@ -1,0 +1,25 @@
+{:source-paths ["src" "test"]
+
+ :dependencies [[org.clojure/clojurescript "1.11.60"]
+                [org.clojure/data.codec "0.1.1"]
+                [org.replikativ/hasch "0.3.96"]]
+
+ :builds
+ {:test
+  {:target :karma
+   :output-to "target/test.js"
+   :ns-regexp "-test$"
+   :compiler-options {:warnings {:fn-deprecated false}}}
+
+  :browser-test
+  {:target :browser-test
+   :test-dir "target/browser-test"
+   :ns-regexp "-test$"
+   :runner-ns geheimnis.test-runner
+   :compiler-options {:warnings {:fn-deprecated false}}}
+
+  :node-test
+  {:target :node-test
+   :output-to "target/node-test.js"
+   :ns-regexp "-test$"
+   :compiler-options {:warnings {:fn-deprecated false}}}}}
