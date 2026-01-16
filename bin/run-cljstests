@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+
+# Run ClojureScript tests with karma
+npx shadow-cljs compile ci

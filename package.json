@@ -4,7 +4,8 @@
   "description": "Cross-platform cryptography for Clojure and ClojureScript",
   "private": true,
   "scripts": {
-    "test": "echo \"Tests run via clojure\""
+    "test": "echo \"Tests run via clojure\"",
+    "ci-test": "npx shadow-cljs compile ci && npx karma start --single-run"
   },
   "devDependencies": {
     "karma": "^6.4.2",
