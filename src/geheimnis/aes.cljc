@@ -51,7 +51,9 @@
        (.decode pkcs7 16 (.decrypt cbc e (byte-array iv))))))
 
 (comment
-  (decrypt "foo" (encrypt "foo" (byte-array (repeat 10 7))))
+  (seq (encrypt "foo" (byte-array (repeat 10 7))))
+
+  (seq (decrypt "foo" (encrypt "foo" (byte-array (repeat 10 7)))))
 
   (encrypt "foo" (byte-array (repeat 10 7)))
 

@@ -1,5 +1,8 @@
 # geheimnis
 
+[![Clojars Project](https://img.shields.io/clojars/v/org.replikativ/geheimnis.svg)](https://clojars.org/org.replikativ/geheimnis)
+[![cljdoc badge](https://cljdoc.org/badge/org.replikativ/geheimnis)](https://cljdoc.org/d/org.replikativ/geheimnis/CURRENT)
+
 Implementation of cross-platform (clj, cljs) cryptography. The library supports
 AES/CBC/Pkcs7Padding with a 256 bit key and RSA with arbitrary keysize, as well as simple MD5 hashing. If you
 need something which is not provided, please open an issue. While `geheimnis` is
@@ -13,49 +16,88 @@ This library is still very young, but encryption methods work between
 platforms and are initialized with proper upstream/documented
 parameters. If you hit any problems, open an issue.
 
-## Usage <a href="https://gitter.im/replikativ/replikativ?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667" alt="Gitter" data-canonical-src="https://badges.gitter.im/Join%20Chat.svg" style="max-width:100%;"></a>
+## Usage
 
-Add this to your leiningen project's dependencies:
-[![Clojars Project](http://clojars.org/io.replikativ/geheimnis/latest-version.svg)](http://clojars.org/io.replikativ/geheimnis)
+Add this to your project dependencies:
 
+**deps.edn:**
+```clojure
+org.replikativ/geheimnis {:mvn/version "0.1.15"}
+```
 
-~~~clojure
-(require '[geheimnis.rsa :refer [gen-key encrypt decrypt]]
-         '[geheimnis.base64 :refer [encode decode]])
+**Leiningen/Boot:**
+```clojure
+[org.replikativ/geheimnis "0.1.15"]
+```
+
+### RSA Example
+
+```clojure
+(require '[org.replikativ.geheimnis.rsa :refer [gen-key encrypt decrypt]]
+         '[org.replikativ.geheimnis.base64 :refer [encode decode]])
 
 (def rsa-key (gen-key 1024))
 
 (decrypt rsa-key (encrypt rsa-key (BigInteger. "123")))
 
 (encode (:pub-key rsa-key)) ;; => #geheimnis/Base64 "AAECAwQFBgcICQ=="
-~~~
+```
 
-~~~clojure
-(require '[geheimnis.aes :refer [encrypt decrypt]])
+### AES Example
+
+```clojure
+(require '[org.replikativ.geheimnis.aes :refer [encrypt decrypt]])
 
 (decrypt "s3cr3T" (encrypt "s3cr3T" (byte-array (range 10))))
-~~~
+```
 
-~~~clojure
-(require '[geheimnis.md5 :refer [encode]])
+### MD5 Example
 
-(encode "geheimnis") ;; => "525e92c6aa11544a2ab794f8921ecb0f" 
-~~~
+```clojure
+(require '[org.replikativ.geheimnis.md5 :refer [encode]])
 
+(encode "geheimnis") ;; => "525e92c6aa11544a2ab794f8921ecb0f"
+```
 
-## Clojurescript Testing
+## Development
 
-Make sure [karma](http://karma-runner.github.io/1.0/index.html) and launcher for testing in your favourite browser is installed:
+**Run tests:**
+```bash
+clojure -M:test
+```
 
-~~~shell
- npm install karma karma-firefox-launcher karma-chrome-launcher karma-safari-launcher  karma-cljs-test --save-dev
-~~~
+**Format code:**
+```bash
+clojure -M:format      # Check formatting
+clojure -M:ffix        # Auto-fix formatting
+```
 
-Test in your preferred browser by running
-~~~shell
-lein doo firefox browser-test
-~~~
+**Build JAR:**
+```bash
+clojure -T:build jar
+```
 
+**Install locally:**
+```bash
+clojure -T:build install
+```
+
+## Changes from io.replikativ to org.replikativ
+
+This library has been migrated from `io.replikativ/geheimnis` to `org.replikativ/geheimnis`.
+
+**Namespace changes:**
+- `geheimnis.*` → `org.replikativ.geheimnis.*`
+
+**Old (deprecated):**
+```clojure
+(require '[geheimnis.rsa :refer [gen-key]])
+```
+
+**New:**
+```clojure
+(require '[org.replikativ.geheimnis.rsa :refer [gen-key]])
+```
 
 ## TODO
 - include jsbn library with externs or as gclosure module
@@ -64,10 +106,9 @@ lein doo firefox browser-test
 - add padding support to RSA
 - Explore http://nacl.cr.yp.to/ with https://download.libsodium.org/doc/ and https://www.npmjs.com/package/libsodium for proven safety
 
-
 ## License
 
-Copyright © 2016-2017 Christian Weilbach, Konrad Kühne
+Copyright © 2016-2025 Christian Weilbach, Konrad Kühne
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
