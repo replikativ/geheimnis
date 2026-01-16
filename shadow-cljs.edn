@@ -5,7 +5,13 @@
                 [org.replikativ/hasch "0.3.96"]]
 
  :builds
- {:test
+ {:ci
+  {:target :karma
+   :output-to "target/ci.js"
+   :ns-regexp "-test$"
+   :compiler-options {:warnings {:fn-deprecated false}}}
+
+  :test
   {:target :karma
    :output-to "target/test.js"
    :ns-regexp "-test$"
@@ -15,7 +21,6 @@
   {:target :browser-test
    :test-dir "target/browser-test"
    :ns-regexp "-test$"
-   :runner-ns geheimnis.test-runner
    :compiler-options {:warnings {:fn-deprecated false}}}
 
   :node-test
