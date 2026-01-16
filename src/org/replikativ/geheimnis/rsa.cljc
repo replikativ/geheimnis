@@ -35,7 +35,6 @@
 #?(:cljs
    (r/register-tag-parser! 'geheimnis/RSAKey base64map->RSAKey))
 
-
 (defn gen-key
   "Generates a key of bit-size and returns a RSAKey. The RSAKey is
   printed and read for non-conflicting transmission with cljs (which
@@ -68,31 +67,24 @@
                      :priv-key priv-key
                      :modulus modulus}))))
 
-
-
 (defn encrypt
   "Encrypts BigInteger m provided the public key and modulus as Base64."
   [{:keys [pub-key modulus]} m]
   (.modPow m pub-key modulus))
-
 
 (defn decrypt
   "Decrypts BigInteger e priveded the private key and modulus as Base64."
   [{:keys [priv-key modulus]} e]
   (.modPow e priv-key modulus))
 
-
 (comment
   (require 'figwheel-sidecar.repl-api)
   (figwheel-sidecar.repl-api/cljs-repl)
-
-
 
   (def rsa-key #_(gen-key 10 :random (java.util.Random. 42))
     (gen-key 1024))
 
   (b64/encode (.toByteArray (:modulus rsa-key)))
-
 
   (BigInteger. (byte-array [1 0 0]))
 
@@ -114,9 +106,4 @@
 
   (js/BigInteger. (clj->js (map #(if (> % 127) (- % 128) %)  (edn-hash [1 2 3]))))
 
-
-
-  (.modPow (js/BigInteger. "12345") (js/BigInteger. "12345") (js/BigInteger. "123"))
-
-
-  )
+  (.modPow (js/BigInteger. "12345") (js/BigInteger. "12345") (js/BigInteger. "123")))

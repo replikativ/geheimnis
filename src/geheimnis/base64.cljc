@@ -11,7 +11,6 @@
   #?(:clj (Base64. (String. (b64/encode byte-arr) "UTF-8"))
      :cljs (Base64. (goog.crypt.base64.encodeByteArray byte-arr))))
 
-
 (defn decode
   "Returns a byte-array for encoded String."
   [base64]
@@ -24,8 +23,6 @@
   (let [d (decode base64)]
     #?(:clj (BigInteger. d)
        :cljs (js/BigInteger. d))))
-
-
 
 #?(:clj
    (defmethod print-method geheimnis.base64.Base64
@@ -41,7 +38,6 @@
 
 #?(:cljs
    (r/register-tag-parser! 'geheimnis/Base64 (fn [s] (js/BigInteger. s))))
-
 
 (comment
   (vec (decode (encode (clj->js (range 10))))))

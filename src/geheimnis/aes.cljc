@@ -10,7 +10,6 @@
                    [javax.crypto.spec SecretKeySpec]
                    [javax.crypto.spec IvParameterSpec])))
 
-
 #?(:cljs (def byte-array clj->js))
 
 (defn encrypt
@@ -31,7 +30,6 @@
                  pkcs7 (goog.crypt.Pkcs7.)
                  padded (.encode pkcs7 16 m)]
              (.encrypt cbc padded (byte-array iv)))))
-
 
 (defn decrypt
   "Decrypts with AES/CBC/PKCS{5/7}Padding by hashing a 256 bit key out of key.
@@ -63,8 +61,7 @@
   (vec (decrypt "foo" (byte-array (mapv #(if (> % 127) (- % 256) %)
                                         [6 224 71 170 241 204 115 21 30 8 46 223 106 207 55 42]))))
 
-
-  ;; cljs
+;; cljs
   (vec (decrypt "foo" (byte-array (mapv #(if (> % 127) (- % 256) %)
                                         [162 154 180 196 57 250 139 34 205 89 66 113 0 72 14 101]))))
   ;; clj

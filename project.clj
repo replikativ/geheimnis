@@ -27,12 +27,12 @@
              :source-paths ["src"]
              :figwheel     true
              :compiler
-                           {:main          geheimnis.rsa
-                            :asset-path    "js/out"
-                            :output-to     "resources/public/js/client.js"
-                            :output-dir    "resources/public/js/out"
-                            :optimizations :none
-                            :pretty-print  true}}
+             {:main          geheimnis.rsa
+              :asset-path    "js/out"
+              :output-to     "resources/public/js/client.js"
+              :output-dir    "resources/public/js/out"
+              :optimizations :none
+              :pretty-print  true}}
             {:id           "browser-test"
              :source-paths ["src" "test"]
              :compiler     {:output-to     "out/browser_tests.js"

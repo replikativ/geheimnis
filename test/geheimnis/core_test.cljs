@@ -7,11 +7,11 @@
 (enable-console-print!)
 
 #_(deftest aes-test
-  (testing "AES tests."
-    (is (= [7 7 7 7 7 7 7 7 7 7]
-           (vec (aes/decrypt "foo" (aes/encrypt "foo" (aes/byte-array (repeat 10 7)))))))
-    (is (= (vec (aes/encrypt "foo" (aes/byte-array (repeat 10 7))))
-           [-70 -83 -75 9 -46 -97 70 -89 -124 80 -99 -15 109 -57 66 -108]))))
+    (testing "AES tests."
+      (is (= [7 7 7 7 7 7 7 7 7 7]
+             (vec (aes/decrypt "foo" (aes/encrypt "foo" (aes/byte-array (repeat 10 7)))))))
+      (is (= (vec (aes/encrypt "foo" (aes/byte-array (repeat 10 7))))
+             [-70 -83 -75 9 -46 -97 70 -89 -124 80 -99 -15 109 -57 66 -108]))))
 
 (deftest base64-test
   (testing "Base64 encoding."
