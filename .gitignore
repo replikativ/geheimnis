@@ -13,3 +13,11 @@ pom.xml.asc
 geheimnis.iml
 node_modules
 out
+
+# Tools.build
+.cpcache/
+target/
+
+# Build artifacts
+*.jar
+*.class
