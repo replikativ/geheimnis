@@ -1,0 +1,16 @@
+{:paths ["src" "resources"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        org.clojure/clojurescript {:mvn/version "1.11.60"}
+        org.clojure/data.codec {:mvn/version "0.1.1"}
+        org.replikativ/hasch {:mvn/version "0.3.96"}}
+
+ :aliases {:test {:extra-paths ["test"]
+                  :extra-deps {lambdaisland/kaocha {:mvn/version "1.91.1392"}
+                               lambdaisland/kaocha-cljs {:mvn/version "1.5.154"}}}
+           :build {:deps {io.github.clojure/tools.build {:git/tag "v0.10.5" :git/sha "2a21b7a"}
+                          slipset/deps-deploy {:mvn/version "0.2.2"}}
+                   :ns-default build}
+           :format {:extra-deps {cljfmt/cljfmt {:mvn/version "0.12.0"}}
+                    :main-opts ["-m" "cljfmt.main" "check"]}
+           :ffix {:extra-deps {cljfmt/cljfmt {:mvn/version "0.12.0"}}
+                  :main-opts ["-m" "cljfmt.main" "fix"]}}}
