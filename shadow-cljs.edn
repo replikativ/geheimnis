@@ -1,8 +1,8 @@
 {:source-paths ["src" "test"]
 
- :dependencies [[org.clojure/clojurescript "1.11.60"]
-                [org.clojure/data.codec "0.1.1"]
-                [org.replikativ/hasch "0.3.96"]]
+ ;; deps resolved from deps.edn so the :local overlay (-A:local) can override
+ ;; hasch to the sibling checkout during co-development.
+ :deps {:aliases [:cljs :test]}
 
  :builds
  {:ci
@@ -26,5 +26,6 @@
   :node-test
   {:target :node-test
    :output-to "target/node-test.js"
-   :ns-regexp "-test$"
+   ;; v2 crypto tests only (the legacy geheimnis.* jsbn tests don't run on node)
+   :ns-regexp "^org\\.replikativ\\.geheimnis\\..*-test$"
    :compiler-options {:warnings {:fn-deprecated false}}}}}

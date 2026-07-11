@@ -76,13 +76,21 @@ ECDSA-P256/RSA for speed, small keys (32 B), determinism, misuse-resistance.
 New (`org.replikativ.geheimnis.*`):
 
 ```
-org.replikativ.geheimnis.core     ; the façade protocol + platform dispatch, random-bytes
-org.replikativ.geheimnis.aead     ; aead-encrypt / aead-decrypt (AES-256-GCM), envelope
-org.replikativ.geheimnis.sign     ; ed25519 gen-keypair / sign / verify
-org.replikativ.geheimnis.dh       ; x25519 gen-keypair / agree ; hkdf
-org.replikativ.geheimnis.hash     ; sha-256 / hmac-sha-256 / ct-equal?
-org.replikativ.geheimnis.codec    ; base64url, byte<->hex, key (de)serialization
+org.replikativ.geheimnis.core     ; random-bytes (CSPRNG) + ct-equal?  (SYNC)
+org.replikativ.geheimnis.codec    ; base64url/hex/utf8 + byte-array utils (SYNC)
+org.replikativ.geheimnis.hash     ; hmac-sha-256 + hkdf; re-exports hasch sha256/512 (SYNC)
+org.replikativ.geheimnis.aead     ; aead-encrypt / aead-decrypt (AES-256-GCM)  (ASYNC)
+org.replikativ.geheimnis.sign     ; ed25519 gen-keypair / sign / verify        (ASYNC)
+org.replikativ.geheimnis.dh       ; x25519 gen-keypair / agree                 (ASYNC)
 ```
+
+**Raw SHA lives in hasch, not geheimnis.** hasch already computes SHA-256/512
+synchronously and portably (`goog.crypt` on CLJS, `MessageDigest` on JVM), so it
+now exposes `hasch.core/sha256` and `sha512` (byte-array -> byte-array) and
+`geheimnis.hash` re-exports them. `geheimnis.hash` owns only the *keyed* side
+(HMAC via `goog.crypt.Hmac` / `javax.crypto.Mac`, and HKDF on top). The line held:
+**hasch = unkeyed content hashing; geheimnis = keyed/secret crypto** — a MAC never
+leaks into the addressing library.
 
 Deprecated (kept for read-back compatibility, marked `^:deprecated`, never the
 default, no new features):
@@ -97,23 +105,31 @@ geheimnis.md5 / …md5                           ; DELETE (empty)
 
 ---
 
-## 5. The portable interface (async-shaped)
+## 5. The interface — sync where it can be, async only where forced
 
-Web Crypto is Promise-based; JVM crypto is synchronous. To keep ONE cross-platform
-signature, **every façade op returns a `core.async` channel** yielding the result
-(or an error value). JVM impls resolve synchronously into the channel; CLJS impls
-bridge the Web Crypto Promise onto the channel. konserve and kabel are already
-`core.async`/`superv.async`-shaped (`<?-`, `async+sync`), so callers thread it
-naturally.
+Refinement (the async surface is smaller than first assumed): a primitive is
+**synchronous** when a sync JS impl exists (goog.crypt), **asynchronous** only
+when the sole CLJS option is Web Crypto (Promise-based).
+
+- **SYNC** (return values directly): `random-bytes`, `ct-equal?`, the raw SHA
+  digests (hasch), `hmac-sha-256`, `hkdf`. This is decisive: **HS256 JWT verify
+  stays fully synchronous in CLJS** (`goog.crypt.Hmac`) — the common symmetric-auth
+  case needs no async at all.
+- **ASYNC** (return a `core.async` channel): `aead-encrypt/decrypt` (AES-GCM),
+  `sign/verify` (Ed25519), `dh-agree` (X25519) — Web Crypto on CLJS (+ noble for
+  the curve gap), `java.security` on JVM resolving synchronously into the channel.
+  konserve/kabel are already `core.async`/`superv.async`-shaped, so this threads
+  naturally.
 
 ```clojure
-;; all return a channel; error surfaces as an ex-info on the channel
-(random-bytes n)                       ; -> chan<bytes>   (CSPRNG)
-(hash bytes)                           ; -> chan<bytes>   SHA-256
-(hmac key bytes)                       ; -> chan<bytes>   HMAC-SHA-256
-(ct-equal? a b)                        ; -> bool          constant-time (sync ok)
-(hkdf ikm salt info len)               ; -> chan<bytes>
+;; SYNC — return values directly
+(random-bytes n)                       ; -> bytes         (CSPRNG)
+(ct-equal? a b)                        ; -> bool          constant-time
+(sha256 bytes) / (sha512 bytes)        ; -> bytes         (hasch)
+(hmac-sha256 key bytes)                ; -> bytes         HMAC-SHA-256
+(hkdf ikm salt info len)               ; -> bytes         HKDF-SHA-256
 
+;; ASYNC — return a core.async channel (error surfaces as ex-info on the channel)
 (aead-encrypt key nonce aad plaintext) ; -> chan<bytes>   ct||tag (GCM)
 (aead-decrypt key nonce aad ct)        ; -> chan<bytes|⊥>  verifies tag, ⊥ on fail
 

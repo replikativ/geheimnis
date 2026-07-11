@@ -72,3 +72,35 @@
   [bytes]
   #?(:clj  (String. ^bytes bytes StandardCharsets/UTF_8)
      :cljs (gcrypt/utf8ByteArrayToString bytes)))
+
+;; ---------------------------------------------------------------------------
+;; byte-array primitives (JVM byte[] / CLJS Uint8Array)
+;; ---------------------------------------------------------------------------
+
+(defn blen
+  "Length of a byte-array."
+  [bs]
+  #?(:clj (alength ^bytes bs) :cljs (.-length bs)))
+
+(defn zeros
+  "A zero-filled byte-array of length n."
+  [n]
+  #?(:clj (byte-array n) :cljs (js/Uint8Array. n)))
+
+(defn concat-bytes
+  "Concatenate a seq of byte-arrays into one."
+  [arrs]
+  (let [total (reduce + (map blen arrs))
+        out   #?(:clj (byte-array total) :cljs (js/Uint8Array. total))]
+    (loop [off 0 as (seq arrs)]
+      (if as
+        (let [a (first as)]
+          #?(:clj  (System/arraycopy a 0 out off (blen a))
+             :cljs (.set out a off))
+          (recur (+ off (blen a)) (next as)))
+        out))))
+
+(defn sub-bytes
+  "First n bytes of a byte-array (a copy)."
+  [bs n]
+  #?(:clj (java.util.Arrays/copyOf ^bytes bs (int n)) :cljs (.slice bs 0 n)))
