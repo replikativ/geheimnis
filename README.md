@@ -3,112 +3,88 @@
 [![Clojars Project](https://img.shields.io/clojars/v/org.replikativ/geheimnis.svg)](https://clojars.org/org.replikativ/geheimnis)
 [![cljdoc badge](https://cljdoc.org/badge/org.replikativ/geheimnis)](https://cljdoc.org/d/org.replikativ/geheimnis/CURRENT)
 
-Implementation of cross-platform (clj, cljs) cryptography. The library supports
-AES/CBC/Pkcs7Padding with a 256 bit key and RSA with arbitrary keysize, as well as simple MD5 hashing. If you
-need something which is not provided, please open an issue. While `geheimnis` is
-not supposed to cover all cryptographic options like OpenSSL compatibility with
-a big set of chiffres, common and useful algorithms to do standard
-public-private key solutions should be provided with a solid implementation.
-`geheimnis` is supposed to be batteries included on Clojure level, so doing the
-right thing should be easy.
+Portable cryptography for Clojure **and** ClojureScript (browser + Node) — one
+API, native on each platform.
 
-This library is still very young, but encryption methods work between
-platforms and are initialized with proper upstream/documented
-parameters. If you hit any problems, open an issue.
+---
+
+> ## ⚠️ Security status — read this first
+>
+> **v1 (`geheimnis.aes`, `geheimnis.rsa`, `geheimnis.md5`) is deprecated and NOT
+> safe for new use.** It provides unauthenticated AES-CBC (no integrity — a
+> tampered ciphertext is undetectable), *textbook* RSA (no padding — malleable,
+> unsafe), and an empty MD5. Do not use these for anything security-sensitive.
+>
+> **v2 (`org.replikativ.geheimnis.*`) is a ground-up modern rewrite in progress**
+> — authenticated encryption (AES-256-GCM), Ed25519 signatures, X25519 key
+> agreement, HMAC/HKDF, a CSPRNG-only randomness source, portable across JVM /
+> browser / Node. Status below.
+
+---
+
+## v2 status
+
+The synchronous foundation is landed and verified on JVM and Node against
+NIST/RFC test vectors; the asymmetric + AEAD tier is in progress.
+
+| namespace | provides | sync? | status |
+|---|---|---|---|
+| `…geheimnis.core`  | `random-bytes` (CSPRNG), `ct-equal?` | sync | ✅ |
+| `…geheimnis.codec` | base64url / hex / utf8, byte-array utils | sync | ✅ |
+| `…geheimnis.hash`  | `hmac-sha256`, `hkdf`; `sha256`/`sha512` (via hasch) | sync | ✅ |
+| `…geheimnis.aead`  | AES-256-GCM authenticated encryption | async | ⏳ |
+| `…geheimnis.sign`  | Ed25519 sign / verify | async | ⏳ |
+| `…geheimnis.dh`    | X25519 key agreement | async | ⏳ |
+
+**Design principle — sync where possible, async only where forced.** Hashing,
+HMAC and HKDF are synchronous on both platforms (`goog.crypt` / `java.security`),
+so token verification (HS256) needs no async. Only AEAD and the elliptic curves
+use the async tier (Web Crypto on CLJS, `java.security` on the JVM), returning
+`core.async` channels.
+
+**Randomness is CSPRNG-only** — `SecureRandom` on the JVM,
+`crypto.getRandomValues` in the browser/Node; it throws loudly rather than fall
+back to `Math.random`.
+
+Raw SHA digests live in [hasch](https://github.com/replikativ/hasch) (the
+content-hashing library) and are re-exported here — geheimnis owns the *keyed* /
+secret crypto, hasch owns unkeyed content hashing.
 
 ## Usage
 
-Add this to your project dependencies:
-
-**deps.edn:**
 ```clojure
-org.replikativ/geheimnis {:mvn/version "0.1.15"}
+;; deps.edn
+org.replikativ/geheimnis {:mvn/version "…"}
 ```
 
-**Leiningen/Boot:**
 ```clojure
-[org.replikativ/geheimnis "0.1.15"]
+(require '[org.replikativ.geheimnis.core :as g]
+         '[org.replikativ.geheimnis.hash :as h]
+         '[org.replikativ.geheimnis.codec :as codec])
+
+(g/random-bytes 32)                 ; 32 CSPRNG bytes
+(h/hmac-sha256 key msg)             ; HMAC-SHA-256
+(h/hkdf ikm salt info 32)           ; derive 32 bytes (RFC 5869)
+(codec/bytes->b64url some-bytes)    ; unpadded base64url
 ```
 
-### RSA Example
-
-```clojure
-(require '[org.replikativ.geheimnis.rsa :refer [gen-key encrypt decrypt]]
-         '[org.replikativ.geheimnis.base64 :refer [encode decode]])
-
-(def rsa-key (gen-key 1024))
-
-(decrypt rsa-key (encrypt rsa-key (BigInteger. "123")))
-
-(encode (:pub-key rsa-key)) ;; => #geheimnis/Base64 "AAECAwQFBgcICQ=="
-```
-
-### AES Example
-
-```clojure
-(require '[org.replikativ.geheimnis.aes :refer [encrypt decrypt]])
-
-(decrypt "s3cr3T" (encrypt "s3cr3T" (byte-array (range 10))))
-```
-
-### MD5 Example
-
-```clojure
-(require '[org.replikativ.geheimnis.md5 :refer [encode]])
-
-(encode "geheimnis") ;; => "525e92c6aa11544a2ab794f8921ecb0f"
-```
+A byte value is a JVM `byte[]` / CLJS `Uint8Array`; the `codec` helpers convert.
 
 ## Development
 
-**Run tests:**
 ```bash
-clojure -M:test
+# JVM
+clj -M:test -e "(require 'org.replikativ.geheimnis.v2-hash-test) \
+                (clojure.test/run-tests 'org.replikativ.geheimnis.v2-hash-test)"
+# CLJS on Node
+npx shadow-cljs compile node-test && node target/node-test.js
+# format
+clj -M:format   # check   ·   clj -M:ffix   # fix
 ```
-
-**Format code:**
-```bash
-clojure -M:format      # Check formatting
-clojure -M:ffix        # Auto-fix formatting
-```
-
-**Build JAR:**
-```bash
-clojure -T:build jar
-```
-
-**Install locally:**
-```bash
-clojure -T:build install
-```
-
-## Changes from io.replikativ to org.replikativ
-
-This library has been migrated from `io.replikativ/geheimnis` to `org.replikativ/geheimnis`.
-
-**Namespace changes:**
-- `geheimnis.*` → `org.replikativ.geheimnis.*`
-
-**Old (deprecated):**
-```clojure
-(require '[geheimnis.rsa :refer [gen-key]])
-```
-
-**New:**
-```clojure
-(require '[org.replikativ.geheimnis.rsa :refer [gen-key]])
-```
-
-## TODO
-- include jsbn library with externs or as gclosure module
-- the clj reader has problems compiling cljs with tagged literals
-- use cljsjs/bignumber for RSA
-- add padding support to RSA
-- Explore http://nacl.cr.yp.to/ with https://download.libsodium.org/doc/ and https://www.npmjs.com/package/libsodium for proven safety
 
 ## License
 
-Copyright © 2016-2025 Christian Weilbach, Konrad Kühne
+Copyright © 2016-2026 Christian Weilbach, Konrad Kühne
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Distributed under the Eclipse Public License either version 1.0 or (at your
+option) any later version.

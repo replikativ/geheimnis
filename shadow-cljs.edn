@@ -8,19 +8,19 @@
  {:ci
   {:target :karma
    :output-to "target/ci.js"
-   :ns-regexp "-test$"
+   :ns-regexp "^org\\.replikativ\\.geheimnis\\..*-test$"
    :compiler-options {:warnings {:fn-deprecated false}}}
 
   :test
   {:target :karma
    :output-to "target/test.js"
-   :ns-regexp "-test$"
+   :ns-regexp "^org\\.replikativ\\.geheimnis\\..*-test$"
    :compiler-options {:warnings {:fn-deprecated false}}}
 
   :browser-test
   {:target :browser-test
    :test-dir "target/browser-test"
-   :ns-regexp "-test$"
+   :ns-regexp "^org\\.replikativ\\.geheimnis\\..*-test$"
    :compiler-options {:warnings {:fn-deprecated false}}}
 
   :node-test

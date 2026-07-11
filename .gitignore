@@ -21,3 +21,12 @@ target/
 # Build artifacts
 *.jar
 *.class
+
+# dev-process design notes (not shipped)
+.internal/
+
+# build artifacts
+/out
+/.shadow-cljs
+/node_modules
+target/
