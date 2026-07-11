@@ -1,0 +1,8 @@
+#kaocha/v1
+;; Scope the JVM suite to the v2 crypto namespaces (org.replikativ.geheimnis.*).
+;; The legacy v1 namespaces (geheimnis.{md5,aes,rsa,base64}) are deprecated and
+;; their tests are not maintained; the CLJS builds are already scoped the same
+;; way via ns-regexp in shadow-cljs.edn.
+{:tests [{:id          :unit
+          :test-paths  ["test"]
+          :ns-patterns ["org\\.replikativ\\.geheimnis\\..*-test$"]}]}
