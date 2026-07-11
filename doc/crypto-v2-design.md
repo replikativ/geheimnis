@@ -228,17 +228,21 @@ New encryptor, **id 2 `:aes-gcm`** (alongside `0 null`, `1 aes-cbc` read-only):
 
 ---
 
-## 11. Open questions
+## 11. Decisions (locked 2026-07-11)
 
-1. Vendored curve fallback: `@noble/curves` (audited, tiny, tree-shakeable) vs
-   `tweetnacl-js` (one blob, sync, self-seeds CSPRNG). Lean `@noble/curves`
-   (smaller, modern) unless the whole-NaCl-set is wanted later.
-2. Deterministic vs random nonce for immutable blobs — recommend deterministic
-   (dedup) but confirm datahike relies on value-dedup at the konserve layer.
-3. Do we want private-key *export* (encrypted, for backup/recovery), or strictly
-   non-exportable keys? Affects Web Crypto `extractable` flag + geheimnis API.
-4. Argon2id server dep: Bouncy Castle vs a dedicated argon2 lib; and whether to
-   migrate existing bcrypt hashes lazily on next login.
+1. **Curve fallback = `@noble/curves`** (audited, tiny, tree-shakeable) for
+   Ed25519/X25519 where Web Crypto curves are absent. Not tweetnacl.
+2. **Immutable-blob nonce = deterministic**, `HKDF(key, content-hash)[0:12]`, so
+   datahike keeps value-level dedup at the konserve layer. Mutable cells use a
+   random nonce + version-in-AAD.
+3. **Keys are programmatically accessible** — created `extractable` so the API can
+   read raw key material (needed for JWKS/registry transport and for X25519).
+   Full encrypted export/backup UX is deferred (nice-to-have), but the primitives
+   expose the raw bytes now.
+4. **Passwords: keep bcrypt, no migration.** Existing `kabel.auth.password` bcrypt
+   hashes stay as-is; no lazy re-hash. Argon2id is deferred/optional — no
+   Bouncy-Castle/argon2 dependency pulled in now. (Password KDF is server-only and
+   outside the portable-crypto convergence.)
 
 ---
 
