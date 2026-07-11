@@ -13,7 +13,12 @@
                   :extra-deps {lambdaisland/kaocha {:mvn/version "1.91.1392"}
                                lambdaisland/kaocha-cljs {:mvn/version "1.5.154"}}}
            :build {:deps {io.github.clojure/tools.build {:git/tag "v0.10.5" :git/sha "2a21b7a"}
-                          slipset/deps-deploy {:mvn/version "0.2.2"}}
+                          slipset/deps-deploy {:mvn/version "0.2.2"}
+                          borkdude/gh-release-artifact {:git/url "https://github.com/borkdude/gh-release-artifact"
+                                                        :git/sha "a83ee8da47d56a80b6380cbb6b4b9274048067bd"}
+                          babashka/babashka.curl {:mvn/version "0.1.1"}
+                          babashka/fs {:mvn/version "0.1.2"}
+                          cheshire/cheshire {:mvn/version "5.10.2"}}
                    :ns-default build}
            :format {:extra-deps {cljfmt/cljfmt {:mvn/version "0.8.0"}}
                     :main-opts ["-m" "cljfmt.main" "check"]}

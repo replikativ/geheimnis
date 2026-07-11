@@ -1,4 +1,4 @@
-(ns org.replikativ.geheimnis.v2-hash-test
+(ns org.replikativ.geheimnis.hash-test
   "Known-answer tests for geheimnis v2 keyed hashing against published vectors:
    SHA-256 (NIST), HMAC-SHA-256 (RFC 4231), HKDF-SHA-256 (RFC 5869)."
   (:require #?(:clj [clojure.test :refer [deftest is testing]]

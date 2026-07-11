@@ -1,4 +1,4 @@
-(ns org.replikativ.geheimnis.v2-codec-core-test
+(ns org.replikativ.geheimnis.codec-core-test
   "KAT + round-trip tests for geheimnis v2 codec + core. Byte values are compared
    via hex so the assertions are platform-neutral (JVM signed byte[] vs CLJS
    unsigned Uint8Array)."

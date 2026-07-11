@@ -1,4 +1,4 @@
-(ns org.replikativ.geheimnis.v2-aead-test
+(ns org.replikativ.geheimnis.aead-test
   "AES-256-GCM round-trip + authentication (tamper/wrong-key/wrong-aad rejection),
    async on both platforms."
   (:require #?(:clj [clojure.test :refer [deftest is testing]]
