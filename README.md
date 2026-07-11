@@ -24,9 +24,9 @@ API, native on each platform.
 
 ## v2 status
 
-The synchronous foundation, AES-256-GCM (AEAD), and Ed25519 signatures are
-landed and verified on JVM and Node against NIST/RFC vectors and JVM↔Node
-interop KATs; X25519 key agreement is the remaining tier.
+The full v2 surface — synchronous foundation, AES-256-GCM (AEAD), Ed25519
+signatures, and X25519 key agreement — is landed and verified on JVM and Node
+against NIST/RFC vectors and JVM↔Node interop KATs.
 
 | namespace | provides | sync? | status |
 |---|---|---|---|
@@ -35,7 +35,7 @@ interop KATs; X25519 key agreement is the remaining tier.
 | `…geheimnis.hash`  | `hmac-sha256`, `hkdf`; `sha256`/`sha512` (via hasch) | sync | ✅ |
 | `…geheimnis.aead`  | AES-256-GCM authenticated encryption | async | ✅ |
 | `…geheimnis.sign`  | Ed25519 sign / verify | async | ✅ |
-| `…geheimnis.dh`    | X25519 key agreement | async | ⏳ |
+| `…geheimnis.dh`    | X25519 key agreement | async | ✅ |
 
 **Design principle — sync where possible, async only where forced.** Hashing,
 HMAC and HKDF are synchronous on both platforms (`goog.crypt` / `java.security`),
