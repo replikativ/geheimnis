@@ -72,3 +72,29 @@
           (is (= ::error (result-hex (a/<! (aead/aead-decrypt (gc/random-bytes 32) nonce aad ct)))) "wrong key")
           (is (= ::error (result-hex (a/<! (aead/aead-decrypt key nonce (codec/str->bytes "ctx:v2") ct)))) "wrong aad")
           (done))))))
+
+;; The sync tier exists so callers with a synchronous execution model (konserve's
+;; `{:sync? true}` stores) can use AEAD on the JVM. It must be byte-compatible
+;; with the async tier — the same store must be readable either way.
+#?(:clj
+   (deftest aead-sync-matches-async
+     (let [key (gc/random-bytes 32) nonce (gc/random-bytes 12)
+           aad (codec/str->bytes "ctx:v1") pt (codec/str->bytes "sync tier 🔐")]
+       (testing "sync encrypt produces the KAT bytes"
+         (is (= kat-ct (codec/bytes->hex
+                        (aead/aead-encrypt-sync (codec/hex->bytes kat-key)
+                                                (codec/hex->bytes kat-nonce)
+                                                (codec/str->bytes kat-aad)
+                                                (codec/str->bytes kat-pt))))))
+       (testing "sync decrypts what async encrypted, and vice versa"
+         (let [ct-async (a/<!! (aead/aead-encrypt key nonce aad pt))
+               ct-sync  (aead/aead-encrypt-sync key nonce aad pt)]
+           (is (= (codec/bytes->hex ct-async) (codec/bytes->hex ct-sync)))
+           (is (= (codec/bytes->hex pt) (codec/bytes->hex (aead/aead-decrypt-sync key nonce aad ct-async))))
+           (is (= (codec/bytes->hex pt) (result-hex (a/<!! (aead/aead-decrypt key nonce aad ct-sync)))))))
+       (testing "sync decrypt THROWS on a bad tag (it cannot return an error value)"
+         (let [ct (aead/aead-encrypt-sync key nonce aad pt)]
+           (is (thrown? javax.crypto.AEADBadTagException
+                        (aead/aead-decrypt-sync key nonce aad (flip-first ct))))
+           (is (thrown? javax.crypto.AEADBadTagException
+                        (aead/aead-decrypt-sync key nonce (codec/str->bytes "ctx:v2") ct))))))))

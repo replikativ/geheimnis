@@ -8,6 +8,12 @@
    on CLJS is Promise-based; the JVM resolves synchronously into the channel. The
    contract is identical on both platforms.
 
+   SYNC: `aead-encrypt-sync` / `aead-decrypt-sync` are JVM-only — `javax.crypto`
+   GCM is already synchronous, so the channel is pure ceremony there. On CLJS they
+   throw: Web Crypto has no synchronous surface, so a caller that needs sync AEAD
+   in the browser cannot be satisfied and should hear that rather than block.
+   Both tiers produce and consume the SAME bytes.
+
    Conventions: 256-bit key (32 bytes), 96-bit nonce (12 bytes), 128-bit tag
    appended to the ciphertext (both JVM `AES/GCM/NoPadding` and Web Crypto lay the
    tag out the same way, so JVM↔CLJS ciphertext is interoperable). `aad` (bytes or
@@ -74,3 +80,29 @@
   [key nonce aad ciphertext]
   #?(:clj  (jvm->chan #(jvm-gcm Cipher/DECRYPT_MODE key nonce aad ciphertext))
      :cljs (cljs-gcm "decrypt" key nonce aad ciphertext)))
+
+;; ---------------------------------------------------------------------------
+;; synchronous tier — JVM only
+;; ---------------------------------------------------------------------------
+
+#?(:cljs
+   (defn- no-sync [op]
+     (throw (ex-info (str "Synchronous AEAD (" op ") is not available on ClojureScript: "
+                          "Web Crypto exposes no synchronous cipher. Use aead-"
+                          op " (async) instead.")
+                     {:type :sync-aead-unavailable :platform :cljs :op op}))))
+
+(defn aead-encrypt-sync
+  "JVM-only synchronous `aead-encrypt`. -> (ciphertext ‖ 128-bit tag), throws on
+   failure. Byte-identical to the async tier. Throws on CLJS."
+  [key nonce aad plaintext]
+  #?(:clj  (jvm-gcm Cipher/ENCRYPT_MODE key nonce aad plaintext)
+     :cljs (no-sync "encrypt")))
+
+(defn aead-decrypt-sync
+  "JVM-only synchronous `aead-decrypt`. -> plaintext, or THROWS
+   `javax.crypto.AEADBadTagException` if the tag does not verify (tamper / wrong
+   key / wrong nonce / wrong aad). Throws on CLJS."
+  [key nonce aad ciphertext]
+  #?(:clj  (jvm-gcm Cipher/DECRYPT_MODE key nonce aad ciphertext)
+     :cljs (no-sync "decrypt")))
