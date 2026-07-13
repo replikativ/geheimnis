@@ -87,5 +87,7 @@ clj -M:format   # check   ·   clj -M:ffix   # fix
 
 Copyright © 2016-2026 Christian Weilbach, Konrad Kühne
 
-Distributed under the Eclipse Public License either version 1.0 or (at your
-option) any later version.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this software except in compliance with the License. You may obtain a copy of
+the License at http://www.apache.org/licenses/LICENSE-2.0. See the `LICENSE` and
+`NOTICE` files for details.
