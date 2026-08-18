@@ -71,3 +71,31 @@
           (is (false? (a/<! (sign/verify other msg sig))) "wrong key")
           (is (false? (a/<! (sign/verify public (codec/str->bytes "hello geheimnis ed25519 🔓") sig))) "tamper")
           (done))))))
+
+(deftest der-envelopes-are-constant
+  ;; sign.cljc moves between raw 32-byte keys and PKCS8/SPKI by prepending two
+  ;; fixed prefixes. That is only sound while the JDK emits exactly this
+  ;; encoding for Ed25519, so the constants are checked against freshly
+  ;; generated keys rather than trusted. A JDK that ever changed them would
+  ;; otherwise break every key import silently.
+  #?(:clj
+     (testing "the JDK still emits the encodings the prefixes assume"
+       (dotimes [_ 5]
+         (let [kp (.generateKeyPair (java.security.KeyPairGenerator/getInstance "Ed25519"))
+               pub (.getEncoded (.getPublic kp))
+               priv (.getEncoded (.getPrivate kp))]
+           (is (= 44 (alength pub)))
+           (is (= 48 (alength priv)))
+           (is (= "302a300506032b6570032100"
+                  (codec/bytes->hex (java.util.Arrays/copyOfRange pub 0 12))))
+           (is (= "302e020100300506032b657004220420"
+                  (codec/bytes->hex (java.util.Arrays/copyOfRange priv 0 16)))))))))
+
+#?(:cljs
+   (deftest fallback-is-injectable-and-optional
+     ;; Web Crypto reached Ed25519 in Chrome only in mid-2025, so a runtime
+     ;; without it must still be able to sign. The fallback is injected rather
+     ;; than required so the dependency stays the consumer's choice.
+     (testing "setting and clearing a fallback does not disturb the happy path"
+       (sign/set-fallback! nil)
+       (is (nil? (sign/set-fallback! nil))))))

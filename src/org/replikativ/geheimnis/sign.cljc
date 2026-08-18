@@ -16,10 +16,21 @@
    same bytes move between java.security and Web Crypto unchanged; a JVM-signed
    message verifies on a CLJS peer and vice versa (see sign-test's interop KAT).
 
-   Platform note: Ed25519 in Web Crypto is available in Node 18+ and current
+   Platform note: Web Crypto reached Ed25519 in Chrome only in mid-2025, so a
+   fallback is not hypothetical — an older browser fails outright. Call
+   `set-fallback!` with a noble/ed25519 module and this uses it whenever Web
+   Crypto cannot do the curve; require the npm package as usual and hand the
+   module to `set-fallback!` at startup.
+
+   Injected rather than required, so the dependency stays the consumer's choice
+   and works in every build target — a dynamic `js/require` would not survive a
+   browser build, and a static one would make ~4 KB mandatory for everybody.
+
+   Historical note: Ed25519 in Web Crypto is available in Node 18+ and current
    browsers (2026). Very old browsers without it will surface an error on the
    channel; a `@noble/curves` fallback for that case is future work."
   (:require [clojure.core.async :as a]
+            [org.replikativ.geheimnis.core :as gcore]
             [org.replikativ.geheimnis.codec :as codec])
   #?(:clj (:import [java.security KeyPairGenerator KeyFactory Signature]
                    [java.security.spec PKCS8EncodedKeySpec X509EncodedKeySpec])))
@@ -52,6 +63,35 @@
      (or (some-> (when (exists? js/crypto) js/crypto) .-subtle)
          (some-> (when (exists? js/globalThis) (.-crypto js/globalThis)) .-subtle)
          (throw (ex-info "No Web Crypto (crypto.subtle) available for Ed25519" {})))))
+
+#?(:cljs (defonce ^:private fallback-impl (atom nil)))
+#?(:cljs (defonce ^:private web-crypto-ok (atom nil)))
+
+#?(:cljs
+   (defn set-fallback!
+     "Install a `@noble/ed25519`-shaped module for runtimes whose Web Crypto
+      lacks Ed25519. Pass nil to clear."
+     [m]
+     (reset! fallback-impl m)))
+
+#?(:cljs
+   (defn- probe-web-crypto
+     "Does this runtime's Web Crypto actually implement Ed25519?
+
+      Presence of `crypto.subtle` is not the question — Chrome shipped subtle
+      years before it shipped this curve — so the probe must ask for the
+      algorithm, which is asynchronous. Cached after the first answer."
+     []
+     (let [ch (a/chan 1)]
+       (if (some? @web-crypto-ok)
+         (do (a/put! ch @web-crypto-ok) (a/close! ch))
+         (try
+           (-> (.generateKey (subtle) #js {:name "Ed25519"} true #js ["sign" "verify"])
+               (.then (fn [_] (reset! web-crypto-ok true) (a/put! ch true) (a/close! ch))
+                      (fn [_] (reset! web-crypto-ok false) (a/put! ch false) (a/close! ch))))
+           (catch :default _
+             (reset! web-crypto-ok false) (a/put! ch false) (a/close! ch))))
+       ch)))
 
 #?(:cljs
    (defn- bytes<-chan
@@ -118,11 +158,37 @@
                   (fn [err] (a/put! ch (ex-info "Ed25519 verify failed" {:error err})) (a/close! ch))))
        ch)))
 
+#?(:cljs
+   (defn- noble-generate [m]
+     (let [ch (a/chan 1)
+           seed (gcore/random-bytes 32)]
+       ;; ^js on the injected module: it is an opaque foreign object, so without
+       ;; the hint :advanced would rename these methods and the fallback would
+       ;; break only in a release build.
+       (-> (.getPublicKeyAsync ^js m seed)
+           (.then (fn [pub] (a/put! ch {:public pub :private seed}) (a/close! ch))
+                  (fn [err] (a/put! ch (ex-info "Ed25519 keygen failed" {:error err}))
+                    (a/close! ch))))
+       ch)))
+
+#?(:cljs
+   (defn- dispatch
+     "Web Crypto when it implements the curve, the injected fallback otherwise."
+     [web-fn fallback-fn]
+     (let [ch (a/chan 1)]
+       (a/go
+         (let [m @fallback-impl]
+           (if (and m (not (a/<! (probe-web-crypto))))
+             (a/pipe (fallback-fn m) ch)
+             (a/pipe (web-fn) ch))))
+       ch)))
+
 (defn generate-keypair
   "Generate a fresh Ed25519 keypair. -> channel of {:public <32 bytes>
    :private <32-byte seed>}."
   []
-  #?(:clj (jvm->chan jvm-generate) :cljs (cljs-generate)))
+  #?(:clj (jvm->chan jvm-generate)
+     :cljs (dispatch cljs-generate noble-generate)))
 
 (defn sign
   "Sign `message` (bytes) with a 32-byte Ed25519 `private-key` seed.
@@ -130,7 +196,8 @@
    (seed, message) always yields the same signature on every platform."
   [private-key message]
   #?(:clj  (jvm->chan #(jvm-sign private-key message))
-     :cljs (cljs-sign private-key message)))
+     :cljs (dispatch #(cljs-sign private-key message)
+                     (fn [m] (bytes<-chan (.signAsync ^js m message private-key))))))
 
 (defn verify
   "Verify `signature` over `message` (bytes) against a 32-byte Ed25519
@@ -138,4 +205,10 @@
    the key or signature is malformed."
   [public-key message signature]
   #?(:clj  (jvm->chan #(jvm-verify public-key message signature))
-     :cljs (cljs-verify public-key message signature)))
+     :cljs (dispatch #(cljs-verify public-key message signature)
+                     (fn [m]
+                       (let [ch (a/chan 1)]
+                         (-> (.verifyAsync ^js m signature message public-key)
+                             (.then (fn [ok?] (a/put! ch (boolean ok?)) (a/close! ch))
+                                    (fn [_] (a/put! ch false) (a/close! ch))))
+                         ch)))))
