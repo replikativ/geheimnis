@@ -1,8 +1,8 @@
 (defproject io.replikativ/geheimnis "0.1.1"
   :description "Cross-platform cryptography between cljs and clj."
   :url "https://github.com/replikativ/geheimnis"
-  :license {:name "Eclipse Public License"
-            :url  "http://www.eclipse.org/legal/epl-v10.html"}
+  :license {:name "Apache License, Version 2.0"
+            :url  "https://www.apache.org/licenses/LICENSE-2.0"}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.8.34"]
                  [org.clojure/data.codec "0.1.0"]
