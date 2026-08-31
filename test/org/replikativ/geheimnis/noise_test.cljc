@@ -3,7 +3,7 @@
 
    The known-answer case is copied from Cacophony's independently generated
    public-domain `vectors/cacophony.txt`:
-   https://github.com/haskell-cryptography/cacophony/blob/master/vectors/cacophony.txt"
+   https://github.com/haskell-cryptography/cacophony/blob/8ee9d41e34a1a596cfa3ab12aa4069ff87dc1247/vectors/cacophony.txt"
   (:require #?(:clj [clojure.test :refer [deftest is testing]]
                :cljs [cljs.test :refer-macros [deftest is testing async]])
             [clojure.core.async :as a]
@@ -241,4 +241,46 @@
      :cljs (async done
                   (a/go
                     (is (true? (a/<! (exercise-tamper-rejection))))
+                    (done)))))
+
+(defn- exercise-concurrent-send-ownership []
+  (a/go
+    (try
+      (let [is (unwrap (a/<! (dh/generate-keypair)))
+            rs (unwrap (a/<! (dh/generate-keypair)))
+            init-0 (noise/initialize :initiator is)
+            resp-0 (noise/initialize :responder rs)
+            i1 (unwrap (a/<! (noise/write-message init-0 (codec/zeros 0))))
+            r1 (unwrap (a/<! (noise/read-message resp-0 (:message i1))))
+            r2 (unwrap (a/<! (noise/write-message (:state r1) (codec/zeros 0))))
+            i2 (unwrap (a/<! (noise/read-message (:state i1) (:message r2))))
+            i3 (unwrap (a/<! (noise/write-message (:state i2) (codec/zeros 0))))
+            r3 (unwrap (a/<! (noise/read-message (:state r2) (:message i3))))
+            init-ciphers (noise/transport-ciphers (:state i3))
+            resp-ciphers (noise/transport-ciphers (:state r3))
+            ;; Construct both operations before taking either result. The
+            ;; CipherState guard must atomically grant ownership to only one.
+            first-op (noise/encrypt-transport (:send init-ciphers)
+                                              (codec/str->bytes "first"))
+            second-op (noise/encrypt-transport (:send init-ciphers)
+                                               (codec/str->bytes "second"))
+            results [(a/<! first-op) (a/<! second-op)]
+            successes (remove error-value? results)
+            failures (filter error-value? results)
+            winner (first successes)
+            received (unwrap (a/<! (noise/decrypt-transport
+                                    (:receive resp-ciphers) (:message winner))))]
+        (verify! (= 1 (count successes)) "exactly one concurrent send succeeds")
+        (verify! (= 1 (count failures)) "concurrent state reuse is rejected")
+        (verify! (contains? #{"first" "second"}
+                            (codec/bytes->str (:payload received)))
+                 "winning concurrent payload decrypts")
+        true)
+      (catch #?(:clj Throwable :cljs :default) e e))))
+
+(deftest concurrent-send-cannot-reuse-a-nonce
+  #?(:clj (is (true? (a/<!! (exercise-concurrent-send-ownership))))
+     :cljs (async done
+                  (a/go
+                    (is (true? (a/<! (exercise-concurrent-send-ownership))))
                     (done)))))
