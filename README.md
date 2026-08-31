@@ -24,9 +24,11 @@ API, native on each platform.
 
 ## v2 status
 
-The full v2 surface — synchronous foundation, AES-256-GCM (AEAD), Ed25519
-signatures, and X25519 key agreement — is landed and verified on JVM and Node
-against NIST/RFC vectors and JVM↔Node interop KATs.
+The v2 primitives — synchronous foundation, AES-256-GCM (AEAD), Ed25519
+signatures, and X25519 key agreement — are landed and verified on JVM and Node
+against NIST/RFC vectors and JVM↔Node interop KATs. The Noise transport is a
+pre-release implementation and should receive independent security review
+before production use.
 
 | namespace | provides | sync? | status |
 |---|---|---|---|
@@ -36,6 +38,7 @@ against NIST/RFC vectors and JVM↔Node interop KATs.
 | `…geheimnis.aead`  | AES-256-GCM authenticated encryption | async | ✅ |
 | `…geheimnis.sign`  | Ed25519 sign / verify | async | ✅ |
 | `…geheimnis.dh`    | X25519 key agreement | async | ✅ |
+| `…geheimnis.noise` | `Noise_XX_25519_AESGCM_SHA256` handshake and transport | async | 🧪 |
 
 **Design principle — sync where possible, async only where forced.** Hashing,
 HMAC and HKDF are synchronous on both platforms (`goog.crypt` / `java.security`),
@@ -71,12 +74,41 @@ org.replikativ/geheimnis {:mvn/version "…"}
 
 A byte value is a JVM `byte[]` / CLJS `Uint8Array`; the `codec` helpers convert.
 
+### Noise XX transport
+
+`org.replikativ.geheimnis.noise` implements the exact named Noise revision 34
+suite `Noise_XX_25519_AESGCM_SHA256`. Create one state per connection with a
+long-lived X25519 static keypair, then alternate `write-message` and
+`read-message` according to XX's three-message handshake:
+
+```text
+initiator  -> e
+responder  <- e, ee, s, es
+initiator  -> s, se
+```
+
+Each operation returns a `core.async` channel containing its result or an
+`ExceptionInfo`. Always replace a handshake or transport CipherState with the
+returned next state; a state is deliberately single-use to prevent accidental
+AES-GCM nonce reuse. `transport-ciphers` returns independent `:send` and
+`:receive` states once both sides complete the handshake.
+
+XX authenticates possession of the remote static X25519 key, not a user or
+application identity by itself. Pin `remote-static-key` or bind it to the
+application identity in an encrypted handshake payload before trusting the
+peer. The initiator's first handshake payload is not encrypted. The `:prologue`
+must be identical at both peers and should bind the carrier/application protocol
+where appropriate.
+
+Noise supplies messages, not stream framing. WebSocket message boundaries work
+directly; byte-stream carriers must add an unambiguous length frame. Noise
+messages are limited to 65,535 bytes.
+
 ## Development
 
 ```bash
 # JVM
-clj -M:test -e "(require 'org.replikativ.geheimnis.v2-hash-test) \
-                (clojure.test/run-tests 'org.replikativ.geheimnis.v2-hash-test)"
+clojure -M:test -m kaocha.runner
 # CLJS on Node
 npx shadow-cljs compile node-test && node target/node-test.js
 # format
@@ -89,5 +121,5 @@ Copyright © 2016-2026 Christian Weilbach, Konrad Kühne
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 this software except in compliance with the License. You may obtain a copy of
-the License at http://www.apache.org/licenses/LICENSE-2.0. See the `LICENSE` and
-`NOTICE` files for details.
+the License at http://www.apache.org/licenses/LICENSE-2.0. See `LICENSE` for
+details.
