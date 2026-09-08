@@ -3,9 +3,20 @@ version: 2.1
 orbs:
   tools: replikativ/clj-tools@0
 
+jobs:
+  rng-initialization:
+    docker:
+      - image: clojure:temurin-21-tools-deps
+    steps:
+      - checkout
+      - run:
+          name: Namespace loading must not initialize the CSPRNG
+          command: clojure -M:test -m native-image-random
+
 workflows:
   build-test-and-deploy:
     jobs:
+      - rng-initialization
       - tools/setup:
           context: dockerhub-deploy
           setup_cljs: true
@@ -37,6 +48,7 @@ workflows:
             - tools/format
             - tools/unittest
             - tools/cljstest
+            - rng-initialization
       - tools/release:
           context:
             - github-token

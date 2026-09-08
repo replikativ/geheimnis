@@ -11,7 +11,10 @@
 ;; CSPRNG
 ;; ---------------------------------------------------------------------------
 
-#?(:clj (defonce ^:private ^SecureRandom secure-random (SecureRandom.)))
+;; Loading/AOT-compiling this namespace must not capture a seeded RNG in a
+;; native-image heap. Initialize on first use in the running process instead.
+;; Delay preserves one thread-safe CSPRNG without allocating one per request.
+#?(:clj (defonce ^:private secure-random (delay (SecureRandom.))))
 
 #?(:cljs
    (defn- web-crypto []
@@ -24,7 +27,7 @@
 (defn random-bytes
   "Return `n` cryptographically-random bytes (JVM byte[] / CLJS Uint8Array)."
   [n]
-  #?(:clj  (let [b (byte-array n)] (.nextBytes secure-random b) b)
+  #?(:clj  (let [b (byte-array n)] (.nextBytes ^SecureRandom @secure-random b) b)
      :cljs (let [b (js/Uint8Array. n)] (.getRandomValues (web-crypto) b) b)))
 
 ;; ---------------------------------------------------------------------------
